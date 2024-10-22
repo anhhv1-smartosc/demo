@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  springboot-app:
+    image: "demo-v2"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring-boot-app
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-container:3306/mydatabase
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}myuser
+      SPRING_DATASOURCE_PASSWORD: mypassword
+    ports:
+      - "8080:8080"
+
+networks:
+  default:
+    external:
+      name: my-network  # Tên mạng mặc định mà container mysql-container đang sử dụng
