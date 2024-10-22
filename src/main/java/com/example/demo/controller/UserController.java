@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 
 import com.example.demo.dto.UserDTO;
+import com.example.demo.dto.UserProfileDTO;
 import com.example.demo.entity.User;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,5 +52,10 @@ public class UserController {
     public ResponseEntity<String> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
         return ResponseEntity.ok("User has been deleted");
+    }
+
+    @GetMapping("/profiles")
+    public List<UserProfileDTO> getAllUsersWithProfiles() {
+        return userService.getAllUsersWithProfiles();
     }
 }

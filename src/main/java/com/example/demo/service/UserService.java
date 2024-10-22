@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.UserDTO;
+import com.example.demo.dto.UserProfileDTO;
 import com.example.demo.entity.User;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.UserRepo;
@@ -57,6 +58,10 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         user.setEmail(userDetails.getEmail());
         return mapper.toDTO(userRepository.save(user));
+    }
+
+    public List<UserProfileDTO> getAllUsersWithProfiles() {
+        return userRepository.findAllUserProfiles();
     }
 
     public void deleteUser(Integer id) {
