@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 
+import com.example.demo.dto.UserDTO;
 import com.example.demo.entity.User;
 import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,26 +23,33 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Integer id) {
+        UserDTO dto = userService.getUserById(id);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserDTO>> getUserByEmail(@RequestParam String email) {
+        List<UserDTO> userDTOList = userService.getUserByEmail(email);
+        return ResponseEntity.ok(userDTOList);
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public ResponseEntity<UserDTO> createUser(@RequestBody User user) {
+         UserDTO dto = userService.createUser(user);
+         return ResponseEntity.accepted().body(dto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User user) {
-        User updatedUser = userService.updateUser(id, user);
+    public ResponseEntity<UserDTO> updateUser(@PathVariable Integer id, @RequestBody User user) {
+        UserDTO updatedUser = userService.updateUser(id, user);
+
         return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+    public ResponseEntity<String> deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("User has been deleted");
     }
 }
