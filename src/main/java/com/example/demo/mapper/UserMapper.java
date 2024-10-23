@@ -1,6 +1,6 @@
 package com.example.demo.mapper;
 
-import com.example.demo.dto.UserDTO;
+import com.example.demo.dto.response.UserDTO;
 import com.example.demo.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,7 +16,6 @@ public interface UserMapper {
             @Mapping(source = "username", target = "userAccount"),
             @Mapping(source = "password", target = "passcode"),
             @Mapping(source = "email", target = "email"),
-            @Mapping(target = "role", expression = "java(user.getRole() != null ? user.getRole().name() : null)")
     })
     UserDTO toDTO(User user);
 

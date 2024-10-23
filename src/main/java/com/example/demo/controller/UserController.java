@@ -1,18 +1,21 @@
 package com.example.demo.controller;
 
 
-import com.example.demo.dto.UserDTO;
-import com.example.demo.dto.UserProfileDTO;
+import com.example.demo.dto.response.UserDTO;
+import com.example.demo.dto.response.UserProfileDTO;
 import com.example.demo.entity.User;
 import com.example.demo.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@Slf4j
 public class UserController {
 
     @Autowired
@@ -20,6 +23,10 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("Username: {}", authentication.getName());
+        authentication.getAuthorities().forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
         return userService.getAllUsers();
     }
 
@@ -37,6 +44,10 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<UserDTO> createUser(@RequestBody User user) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("Username: {}", authentication.getName());
+        authentication.getAuthorities().forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
          UserDTO dto = userService.createUser(user);
          return ResponseEntity.accepted().body(dto);
     }
@@ -50,12 +61,10 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Integer id) {
+
         userService.deleteUser(id);
         return ResponseEntity.ok("User has been deleted");
     }
 
-    @GetMapping("/profiles")
-    public List<UserProfileDTO> getAllUsersWithProfiles() {
-        return userService.getAllUsersWithProfiles();
-    }
+
 }

@@ -1,10 +1,10 @@
-package com.example.demo.dto;
+package com.example.demo.dto.response;
 
 
-import com.example.demo.eums.Role;
 import lombok.*;
 
 import java.io.Serializable;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -15,5 +15,5 @@ public class UserDTO implements Serializable {
     private String userAccount;
     private String passcode;
     private String email;
-    private String role;
+    private Set<String> roles;
 }

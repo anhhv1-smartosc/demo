@@ -1,8 +1,9 @@
 package com.example.demo.entity;
 
-import com.example.demo.eums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -22,9 +23,6 @@ public class User {
     @Column(nullable = false, name = "email")
     private String email;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    private Set<String> roles;
 
-    @OneToOne(mappedBy = "user")
-    private Profile profile;
 }
