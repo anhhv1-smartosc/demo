@@ -3,6 +3,7 @@ package com.example.demo.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -23,6 +24,7 @@ public class User {
     @Column(nullable = false, name = "email")
     private String email;
 
-    private Set<String> roles;
+    @ManyToMany
+    private Set<Role> roles = new HashSet<>();
 
 }

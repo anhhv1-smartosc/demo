@@ -1,13 +1,16 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.request.JwtRequest;
+import com.example.demo.dto.request.UserCreate;
 import com.example.demo.dto.response.UserDTO;
 import com.example.demo.dto.response.UserProfileDTO;
 import com.example.demo.entity.Profile;
+import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
-import com.example.demo.eums.Role;
+import com.example.demo.eums.RoleEnum;
 import com.example.demo.mapper.ProfileMapper;
 import com.example.demo.mapper.UserMapper;
+import com.example.demo.repository.RoleRepo;
 import com.example.demo.repository.UserRepo;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -25,12 +28,16 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class UserService {
     @Autowired
-    private final UserRepo userRepository;
+    private UserRepo userRepository;
+
+    @Autowired
+    private RoleRepo roleRepo;
 
     @Autowired
     private UserMapper userMapper;
@@ -65,18 +72,36 @@ public class UserService {
         return list;
     }
 
-    public UserDTO createUser(User user) {
+    public UserDTO createUser(UserCreate request) {
+        User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        Set<String> roles = user.getRoles();
+//        Set<String> roles = user.getRoles();
+//
+//        user.setRoles(roles);
+        List<String> roles = request.getRoles();
+        Set<Role> roles1 = new HashSet<>();
+        for(String role : roles) {
+            Role roleName = roleRepo.findByName(role);
+            roles1.add(roleName);
+        }
+        user.setRoles(roles1);
+        userRepository.save(user);
 
-        user.setRoles(roles);
-        User user1 = userRepository.save(user);
-        return userMapper.toDTO(user1);
+        Set<String> roles2 = user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .collect(Collectors.toSet());
+
+        UserDTO userDTO = userMapper.toDTO(user);
+
+        userDTO.setRoles(roles2);
+
+
+        return userDTO;
     }
 
-    private Role convertToRoleEnum(String role) {
+    private RoleEnum convertToRoleEnum(String role) {
         try {
-            return Role.valueOf(role.toUpperCase());
+            return RoleEnum.valueOf(role.toUpperCase());
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -87,7 +112,17 @@ public class UserService {
         user.setUsername(userDetails.getUsername());
         user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
         user.setEmail(userDetails.getEmail());
-        return userMapper.toDTO(userRepository.save(user));
+        user.setRoles(userDetails.getRoles());
+
+        Set<String> roles = user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .collect(Collectors.toSet());
+
+        UserDTO response = userMapper.toDTO(userRepository.save(user));
+        response.setRoles(roles);
+        userRepository.save(user);
+        return response;
+
     }
 
     public List<UserProfileDTO> getAllUsersWithProfiles() {
@@ -120,7 +155,7 @@ public class UserService {
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getUsername())
-//                .issuer("devteria.com")
+                .issuer("Owen")
                 .issueTime(new Date())
                 .expirationTime(new Date(
                         Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
@@ -165,8 +200,17 @@ public class UserService {
 
     private String buildScope(User user){
         StringJoiner stringJoiner = new StringJoiner(" ");
-        if (!CollectionUtils.isEmpty(user.getRoles()))
-            user.getRoles().forEach(stringJoiner::add);
+        if(!CollectionUtils.isEmpty(user.getRoles())) {
+            user.getRoles()
+                    .forEach(role -> {
+                        stringJoiner.add("ROLE_" + role.getName());
+                        if (!CollectionUtils.isEmpty(role.getPermissions()))
+                            role.getPermissions()
+                                    .forEach(permission -> stringJoiner.add(permission.getName()));
+
+
+                    });
+        }
 
         return stringJoiner.toString();
     }

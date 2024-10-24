@@ -19,6 +19,6 @@ public class ProfileController {
 
     @PostMapping("/create")
     public ResponseEntity<UserProfileDTO> createProfile(@RequestBody ProfileRequest profileRequestDTO) {
-        return ResponseEntity.ok(profileService.createProfile(profileRequestDTO));
+        return ResponseEntity.accepted().body(profileService.createProfile(profileRequestDTO));
     }
 }
