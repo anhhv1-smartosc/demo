@@ -26,14 +26,13 @@ public class RoleController {
 
     @GetMapping
     public ResponseEntity<List<RoleResponse>> getAll() {
-
        return ResponseEntity.ok(roleService.getAll());
     }
 
 
     @DeleteMapping("/{id}")
-    ResponseEntity<String> delete(@PathVariable int id) {
-        roleService.delete(id);
+    ResponseEntity<String> delete(@PathVariable String name) {
+        roleService.delete(name);
 
         return ResponseEntity.accepted().body("Delete success");
     }

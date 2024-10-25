@@ -32,8 +32,6 @@ public class SecurityConfig{
     @Autowired
     private UserDetailServiceImpl userDetailService;
 
-
-
     protected String SIGNER_KEY = "1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij";
 
 //    public SecurityConfig(UserDetailServiceImpl userDetailService, JwtRequestFilter jwtRequestFilter) {
@@ -43,21 +41,22 @@ public class SecurityConfig{
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(authorize -> authorize
+        http.authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET,"/api/users", "api/users/email").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/api/auth/**", "api/profiles/**", "/swagger-ui/**").permitAll()
+                        .requestMatchers("/api/auth/**", "api/profiles/**", "/api/roles/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/users").permitAll()
+                .anyRequest().authenticated()
+                                //.anyRequest().permitAll()
+                );
 
-                      .anyRequest().authenticated()
-                               // .anyRequest().permitAll()
-                )
-                .httpBasic(Customizer.withDefaults())
-                .oauth2ResourceServer(oauth2 ->  oauth2.jwt(jwtConfigurer ->
-                        jwtConfigurer.decoder(jwtDecoder())
+//        http.httpBasic(Customizer.withDefaults());
+
+        http.oauth2ResourceServer(oauth2 ->  oauth2
+                        .jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                )
-                .csrf(AbstractHttpConfigurer::disable);
+                );
+
+        http.csrf(AbstractHttpConfigurer::disable);
 
                //.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -83,7 +82,8 @@ public class SecurityConfig{
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter(){
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
+
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);

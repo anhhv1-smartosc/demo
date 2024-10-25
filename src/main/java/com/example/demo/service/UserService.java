@@ -17,6 +17,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@Transactional
 public class UserService {
     @Autowired
     private UserRepo userRepository;
@@ -81,22 +83,15 @@ public class UserService {
         List<String> roles = request.getRoles();
         Set<Role> roles1 = new HashSet<>();
         for(String role : roles) {
-            Role roleName = roleRepo.findByName(role);
-            roles1.add(roleName);
+           Optional<Role> roleName = roleRepo.findById(role);
+            roleName.ifPresent(roles1::add);
         }
         user.setRoles(roles1);
         userRepository.save(user);
 
-        Set<String> roles2 = user.getRoles().stream()
-                .map(role -> role.getName().name())
-                .collect(Collectors.toSet());
-
-        UserDTO userDTO = userMapper.toDTO(user);
-
-        userDTO.setRoles(roles2);
-
-
-        return userDTO;
+        UserDTO response = userMapper.toDTO(user);
+        response.setRoles(new HashSet<>(request.getRoles()));
+        return response;
     }
 
     private RoleEnum convertToRoleEnum(String role) {
@@ -114,14 +109,11 @@ public class UserService {
         user.setEmail(userDetails.getEmail());
         user.setRoles(userDetails.getRoles());
 
-        Set<String> roles = user.getRoles().stream()
-                .map(role -> role.getName().name())
-                .collect(Collectors.toSet());
+//        Set<String> roles = user.getRoles().stream()
+//                .map(role -> role.getName().name())
+//                .collect(Collectors.toSet());
 
-        UserDTO response = userMapper.toDTO(userRepository.save(user));
-        response.setRoles(roles);
-        userRepository.save(user);
-        return response;
+        return userMapper.toDTO(userRepository.save(user));
 
     }
 
@@ -144,8 +136,7 @@ public class UserService {
 
         if (!authenticated) throw new RuntimeException("Not authenticated");
         else {
-            String token = generateToken(u);
-            return token;
+            return generateToken(u);
         }
     }
 
@@ -183,32 +174,22 @@ public class UserService {
 
         Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
-        var verified = signedJWT.verify(verifier);
+        boolean verified = signedJWT.verify(verifier); // compare if the token has any changes
 
-        if (!verified) {
-            return false;
-        }
+        if (!verified) return false;
 
-        Date currentTime = new Date();
-        if (expiryTime != null && expiryTime.before(currentTime)) {
-            return false;
-        }
-
-        return true;
+        return verified && expiryTime.after(new Date());
 
     }
 
     private String buildScope(User user){
         StringJoiner stringJoiner = new StringJoiner(" ");
         if(!CollectionUtils.isEmpty(user.getRoles())) {
-            user.getRoles()
-                    .forEach(role -> {
+            user.getRoles().forEach(role -> {
                         stringJoiner.add("ROLE_" + role.getName());
                         if (!CollectionUtils.isEmpty(role.getPermissions()))
                             role.getPermissions()
                                     .forEach(permission -> stringJoiner.add(permission.getName()));
-
-
                     });
         }
 

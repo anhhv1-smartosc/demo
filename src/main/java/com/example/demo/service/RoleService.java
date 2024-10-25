@@ -7,7 +7,11 @@ import com.example.demo.mapper.PermissionMapper;
 import com.example.demo.mapper.RoleMapper;
 import com.example.demo.repository.PermissionRepo;
 import com.example.demo.repository.RoleRepo;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,6 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@Transactional
+@Slf4j
 public class RoleService {
 
     @Autowired
@@ -29,27 +35,25 @@ public class RoleService {
 
 
     public RoleResponse create(Role role) {
-        RoleResponse response = roleMapper.toRoleResponse(role);
-        String name = role.getName().toString();
-        response.setName(name);
         roleRepo.save(role);
-        return response;
+        log.info(role.toString());
+        return roleMapper.toRoleResponse(role);
     }
 
 
     public List<RoleResponse> getAll() {
-       List<RoleResponse> responses = new ArrayList<>();
-       List<Role> roles = roleRepo.findAll();
-       for (Role role : roles) {
-           RoleResponse dto = roleMapper.toRoleResponse(role);
-           dto.setName(role.getName().toString());
-           responses.add(dto);
-       }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        log.info(authentication.getName());
+        authentication.getAuthorities().forEach(authority -> log.info(authority.getAuthority()));
+        List<RoleResponse> responses = roleRepo.findAll()
+               .stream().map(role -> roleMapper.toRoleResponse(role))
+               .toList();
+
        return responses;
     }
 
-    public void delete(Integer id) {
-        roleRepo.deleteById(id);
+    public void delete(String name) {
+        roleRepo.deleteById(name);
     }
 
 }
